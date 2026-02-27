@@ -1,0 +1,67 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model Admin {
+  id       String @id @default(auto()) @map("_id") @db.ObjectId
+  name     String @unique // Artıq login üçün bu adı (məs: "admin") istifadə edəcəksən
+  password String
+}
+
+model Restaurant {
+  id        String  @id @default(auto()) @map("_id") @db.ObjectId
+  name      String  // Restoranın müştəriyə görünən adı
+  slogan    String?
+  logo      String?
+  address   String?
+  phone     String?
+}
+
+// 2. Kategoriler
+model Category {
+  id       String    @id @default(auto()) @map("_id") @db.ObjectId
+  name     String
+  products Product[]
+}
+
+// 3. Mehsullar
+model Product {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  price       Float
+  image       String?
+  description String?
+  categoryId  String   @db.ObjectId
+  createdAt   DateTime @default(now())
+  category    Category @relation(fields: [categoryId], references: [id])
+}
+
+// 4. Masalar (İstesen sadece numara olarak tutabilirsin, ama barkod/QR için model iyidir)
+model Table {
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  tableNo String @unique
+}
+
+// 5. Sifarişler (Müşteriden direkt Admin Paneline)
+model Order {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  tableNo   String
+  items     Json     // [{name: "Kebap", qty: 2, price: 15}, ...]
+  total     Float
+  status    String   @default("PENDING") // PENDING, DELIVERED, CANCELLED
+  createdAt DateTime @default(now())
+}
+
+// 6. Bildirişler (Masa "Garson Çağır" veya "Hesap" dediğinde)
+model Notification {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  tableNo   String
+  type      String   // "CALL" veya "BILL"
+  status    String   @default("PENDING") // PENDING, READ
+  createdAt DateTime @default(now())
+}
